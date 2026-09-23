@@ -3,8 +3,10 @@ from tkinter import ttk, messagebox
 import mysql.connector
 import hashlib
 from datetime import datetime
+from dotenv import load_dotenv
 import os
 
+load_dotenv()
 
 # =========================================================
 # DATABASE
@@ -14,10 +16,9 @@ def connect_database():
     return mysql.connector.connect(
         host="localhost",
         user="root",
-        password="Kirosuela123!",
+        password=os.getenv("MYSQL_PASSWORD"),
         database="bbasic_hauling"
     )
-
 
 # =========================================================
 # MAIN WINDOW
@@ -413,7 +414,7 @@ def show_workspace():
         font=("Segoe UI", 9, "bold"),
         fg=MUTED,
         bg=WHITE
-    ).grid(row=0, column=0, columnspan=2, sticky="w")
+    ).grid(row=0, column=0, columnspan=3, sticky="w")
 
     search_entry = ttk.Entry(search_section, width=31)
     search_entry.grid(row=1, column=0, padx=(0, 7), pady=(4, 0))
@@ -426,6 +427,17 @@ def show_workspace():
         text="Search",
         command=perform_search
     ).grid(row=1, column=1, pady=(4, 0))
+
+    def clear_search():
+        search_entry.delete(0, tk.END)
+        load_records()
+        search_entry.focus_set()
+
+    ttk.Button(
+        search_section,
+        text="Clear",
+        command=clear_search
+).grid(row=1, column=2, padx=(6, 0), pady=(4, 0))
 
     search_entry.bind("<Return>", lambda event: perform_search())
 
@@ -914,18 +926,7 @@ def show_workspace():
     bottom_bar = tk.Frame(content, bg=BG)
     bottom_bar.pack(fill="x", pady=(10, 0))
 
-    ttk.Button(
-        bottom_bar,
-        text="Edit Selected",
-        command=lambda: edit_record()
-    ).pack(side="left")
-
-    ttk.Button(
-        bottom_bar,
-        text="Delete Selected",
-        style="Danger.TButton",
-        command=lambda: delete_record()
-    ).pack(side="left", padx=(8, 0))
+    
 
     ttk.Button(
         bottom_bar,
@@ -1139,15 +1140,15 @@ def show_workspace():
 
     def add_truck():
         dialog = tk.Toplevel(root)
-        dialog.title("Add Truck")
-        dialog.geometry("390x190")
+        dialog.title("Add Trucks")
+        dialog.geometry("390x210")
         dialog.resizable(False, False)
         dialog.transient(root)
         dialog.grab_set()
 
         tk.Label(
             dialog,
-            text="Add Truck",
+            text="Add Trucks",
             font=("Segoe UI", 15, "bold")
         ).pack(pady=(20, 5))
 
@@ -1165,7 +1166,11 @@ def show_workspace():
             plate = plate_entry.get().strip().upper()
 
             if not plate:
-                show_error("Add Truck", "Please enter a plate number.")
+                show_error(
+                    "Add Truck",
+                    "Please enter a plate number."
+                )
+                plate_entry.focus_set()
                 return
 
             db = None
@@ -1184,17 +1189,25 @@ def show_workspace():
                 )
 
                 db.commit()
-                dialog.destroy()
+
                 load_trucks(select_plate=plate)
+
+                plate_entry.delete(0, tk.END)
+                plate_entry.focus_set()
 
             except mysql.connector.IntegrityError:
                 show_error(
                     "Add Truck",
                     "That plate number already exists."
                 )
+                plate_entry.focus_set()
 
             except mysql.connector.Error as err:
-                show_error("Database Error", str(err))
+                show_error(
+                    "Database Error",
+                    str(err)
+                )
+                plate_entry.focus_set()
 
             finally:
                 if cursor:
@@ -1204,7 +1217,7 @@ def show_workspace():
 
         ttk.Button(
             dialog,
-            text="SAVE",
+            text="ADD TRUCK",
             style="Primary.TButton",
             command=save_truck
         ).pack(pady=12)
@@ -1213,6 +1226,7 @@ def show_workspace():
             "<Return>",
             lambda event: save_truck()
         )
+
 
     def edit_truck():
         global current_truck_id
@@ -1891,6 +1905,49 @@ def show_workspace():
                 cursor.close()
             if db:
                 db.close()
+
+    # -----------------------------------------------------
+    # RIGHT-CLICK RECORD MENU
+    # -----------------------------------------------------
+
+    record_menu = tk.Menu(
+        root,
+        tearoff=0
+    )
+
+    record_menu.add_command(
+        label="Edit Record",
+        command=edit_record
+    )
+
+    record_menu.add_command(
+        label="Delete Record",
+        command=delete_record
+    )
+
+    def show_record_menu(event):
+        row_id = record_tree.identify_row(event.y)
+
+        # Do nothing if the user right-clicks empty space.
+        if not row_id:
+            return
+
+        # Automatically select the row that was right-clicked.
+        record_tree.selection_set(row_id)
+        record_tree.focus(row_id)
+
+        try:
+            record_menu.tk_popup(
+                event.x_root,
+                event.y_root
+            )
+        finally:
+            record_menu.grab_release()
+
+    record_tree.bind(
+        "<Button-3>",
+        show_record_menu
+    )
 
     # Initial data load
     load_trucks()
