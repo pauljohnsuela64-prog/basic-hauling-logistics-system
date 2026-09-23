@@ -101,7 +101,13 @@ Through this project, I practiced:
 * Git and GitHub version control
 * Troubleshooting programming and database errors
 
-## Future Improvements
+## Screenshots
+
+### Main Application
+
+![Main Application](Login.jpg)
+
+## Future Improvements  
 
 Possible future improvements include:
 
