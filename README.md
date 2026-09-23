@@ -103,9 +103,17 @@ Through this project, I practiced:
 
 ## Screenshots
 
-### Main Application
+### Login
 
-![Main Application](Login.jpg)
+![Login](screenshots/Login.jpg)
+
+### Encode Records
+
+![Encode Records](screenshots/encode%20records.jpg)
+
+### Encode Records (2)
+
+![Encode Records (2)](screenshots/encode%20records%20%282%29.jpg)
 
 ## Future Improvements  
 
