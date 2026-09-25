@@ -12,7 +12,7 @@ load_dotenv()
 
 db = mysql.connector.connect(
     host="localhost",
-    user="root",
+    user="hauling_app",
     password=os.getenv("MYSQL_PASSWORD"),
     database="bbasic_hauling"
 )
